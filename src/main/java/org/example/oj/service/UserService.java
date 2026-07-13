@@ -13,4 +13,9 @@ userService.list();                  // 查询全部
 userService.updateById(user);        // 更新用户
 userService.removeById(1L);          // 删除用户
 */
+    public User getByUsername(String username){
+        return lambdaQuery().eq(User::getUsername,username).one();
+    }
 }
+
+

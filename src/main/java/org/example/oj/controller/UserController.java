@@ -25,4 +25,15 @@ public class UserController {
     public List<User> list(){
         return userService.list();
     }
+    @PostMapping("/login")
+    public String login(@RequestParam String username,@RequestParam String password){
+        User user=userService.getByUsername(username);
+        if(user==null){
+            return "用户不存在";
+        }
+        if(!user.getPassword().equals(password)){
+            return "密码错误";
+        }
+        return "登录成功，欢迎 "+username;
+    }
 }
