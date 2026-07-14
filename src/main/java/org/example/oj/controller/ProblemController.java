@@ -15,7 +15,7 @@ public class ProblemController {
     @Autowired
     private ProblemService problemService;
 
-    @PostMapping("/createProblem")
+    @PostMapping("/create")
     public String createProblem(@RequestBody Problem problem){
         problemService.save(problem);
         return "创建成功";

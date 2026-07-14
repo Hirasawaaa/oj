@@ -1,0 +1,27 @@
+package org.example.oj.controller;
+
+import org.example.oj.entity.Submit;
+import org.example.oj.mapper.SubmitMapper;
+import org.example.oj.service.SubmitService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/submit")
+public class SubmitController {
+    @Autowired
+    private SubmitService submitService;
+
+    @PostMapping("/submit")
+    public String submit(@RequestBody Submit submit){
+        submit.setStatus(0);
+        submitService.save(submit);
+        submitService.judge(submit);
+        return "提交成功";
+    }
+    @GetMapping("{id}")
+    public Submit getSubmit(@PathVariable Long id){
+        return submitService.getById(id);
+    }
+
+}
