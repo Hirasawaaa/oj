@@ -14,6 +14,7 @@ public class UserController {
         User user= new User();
         user.setUsername(username);
         user.setPassword(password);
+        user.setRole("user");
         userService.save(user);
         return "注册成功，用户id: "+user.getId();
     }
