@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>创建题目</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .nav { background: #2c3e50; color: white; padding: 14px 32px; display: flex; justify-content: space-between; }
+        .nav h1 { font-size: 20px; }
+        .nav a { color: #aaa; text-decoration: none; font-size: 14px; }
+        .nav a:hover { color: white; }
+        .container { max-width: 700px; margin: 24px auto; padding: 0 16px; }
+        .card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card h2 { margin-bottom: 20px; }
+        label { display: block; font-size: 14px; color: #555; margin: 12px 0 4px; }
+        input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #4A90D9; }
+        textarea { font-family: 'Consolas', monospace; resize: vertical; }
+        .row { display: flex; gap: 12px; }
+        .row > div { flex: 1; }
+        .btn { padding: 10px 24px; background: #27ae60; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; margin-top: 20px; }
+        .btn:hover { background: #219a52; }
+        .msg { margin-top: 12px; padding: 12px; border-radius: 6px; display: none; }
+        .msg-success { background: #d4edda; color: #155724; display: block; }
+        .msg-error { background: #f8d7da; color: #721c24; display: block; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <h1><a href="problems.html" style="color:white;text-decoration:none;">← 返回列表</a></h1>
+        <span style="font-size:14px;" id="userDisplay"></span>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>创建题目</h2>
+            <label>标题</label>
+            <input type="text" id="title" placeholder="题目标题">
+
+            <label>题目描述</label>
+            <textarea id="description" rows="4" placeholder="描述题目要求..."></textarea>
+
+            <label>输入描述</label>
+            <textarea id="inputDesc" rows="2" placeholder="输入格式说明..."></textarea>
+
+            <label>输出描述</label>
+            <textarea id="outputDesc" rows="2" placeholder="输出格式说明..."></textarea>
+
+            <div class="row">
+                <div>
+                    <label>样例输入</label>
+                    <textarea id="sampleInput" rows="3" placeholder="样例输入..."></textarea>
+                </div>
+                <div>
+                    <label>样例输出</label>
+                    <textarea id="sampleOutput" rows="3" placeholder="样例输出..."></textarea>
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>难度</label>
+                    <select id="difficulty">
+                        <option value="1">简单</option>
+                        <option value="2">中等</option>
+                        <option value="3">困难</option>
+                    </select>
+                </div>
+                <div>
+                    <label>时间限制 (ms)</label>
+                    <input type="number" id="timeLimit" value="1000">
+                </div>
+                <div>
+                    <label>内存限制 (MB)</label>
+                    <input type="number" id="memoryLimit" value="256">
+                </div>
+            </div>
+
+            <button class="btn" onclick="createProblem()">创建题目</button>
+            <div class="msg" id="msg"></div>
+        </div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('username');
+        if (username !== 'admin') window.location.href = 'problems.html';
+        document.getElementById('userDisplay').textContent = '👤 ' + username;
+
+        async function createProblem() {
+            const data = {
+                title: document.getElementById('title').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                inputDesc: document.getElementById('inputDesc').value.trim(),
+                outputDesc: document.getElementById('outputDesc').value.trim(),
+                sampleInput: document.getElementById('sampleInput').value.trim(),
+                sampleOutput: document.getElementById('sampleOutput').value.trim(),
+                difficulty: parseInt(document.getElementById('difficulty').value),
+                timeLimit: parseInt(document.getElementById('timeLimit').value),
+                memoryLimit: parseInt(document.getElementById('memoryLimit').value)
+            };
+
+            if (!data.title) { alert('请输入标题'); return; }
+
+            const msg = document.getElementById('msg');
+            try {
+                const res = await fetch('/problem/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const text = await res.text();
+                if (text.includes('成功')) {
+                    msg.className = 'msg msg-success';
+                    msg.textContent = '✅ 创建成功！';
+                } else {
+                    msg.className = 'msg msg-error';
+                    msg.textContent = '❌ ' + text;
+                }
+            } catch (e) {
+                msg.className = 'msg msg-error';
+                msg.textContent = '❌ 请求失败：' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

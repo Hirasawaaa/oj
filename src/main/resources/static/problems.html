@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>题目列表</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .nav { background: #2c3e50; color: white; padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .nav h1 { font-size: 20px; }
+        .nav .user { font-size: 14px; }
+        .container { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+        .filters { background: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .filters select, .filters input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .filters select:focus, .filters input:focus { outline: none; border-color: #4A90D9; }
+        .filters label { font-size: 14px; color: #555; }
+        .problem-list { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .problem-item { padding: 16px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.15s; display: flex; justify-content: space-between; align-items: center; }
+        .problem-item:last-child { border-bottom: none; }
+        .problem-item:hover { background: #f8f9fa; }
+        .problem-title { font-size: 16px; color: #333; font-weight: 500; }
+        .problem-meta { display: flex; gap: 12px; align-items: center; }
+        .badge { font-size: 12px; padding: 2px 10px; border-radius: 10px; }
+        .badge-easy { background: #d4edda; color: #155724; }
+        .badge-medium { background: #fff3cd; color: #856404; }
+        .badge-hard { background: #f8d7da; color: #721c24; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 16px; }
+        .pagination button { padding: 8px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; }
+        .pagination button:hover { background: #f0f0f0; }
+        .pagination button:disabled { opacity: 0.4; cursor: default; }
+        .pagination span { font-size: 14px; color: #555; }
+        .empty { text-align: center; padding: 48px; color: #999; }
+        .difficulty-label { font-size: 14px; color: #555; }
+        #createBtn { padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        #createBtn:hover { background: #219a52; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <h1>OJ - 题目列表</h1>
+        <span class="user" id="userDisplay"></span>
+    </div>
+
+    <div class="container">
+        <div class="filters">
+            <label>难度筛选：</label>
+            <select id="difficultyFilter" onchange="loadProblems(1)">
+                <option value="">全部</option>
+                <option value="1">简单</option>
+                <option value="2">中等</option>
+                <option value="3">困难</option>
+            </select>
+            <label>排序：</label>
+            <select id="sortBy">
+                <option value="id">按 ID</option>
+                <option value="difficulty">按难度</option>
+            </select>
+            <select id="sortOrder">
+                <option value="asc">升序</option>
+                <option value="desc">降序</option>
+            </select>
+            <button onclick="loadProblems(1)" style="padding:8px 16px;background:#4A90D9;color:white;border:none;border-radius:6px;cursor:pointer;">查询</button>
+            <button id="createBtn" onclick="location.href='create_problem.html'" style="display:none;">+ 创建题目</button>
+        </div>
+
+        <div class="problem-list" id="problemList"></div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('username') || '未登录';
+        document.getElementById('userDisplay').textContent = '👤 ' + username;
+        if (username === 'admin') {
+            document.getElementById('createBtn').style.display = 'inline-block';
+        }
+
+        async function loadProblems(page) {
+            const difficulty = document.getElementById('difficultyFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            let url = `/problem/list?page=${page}&pageSize=20`;
+            if (difficulty) url += `&difficulty=${difficulty}`;
+            url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                renderProblems(data.records, data.current, data.pages);
+            } catch (e) {
+                document.getElementById('problemList').innerHTML = '<div class="empty">加载失败</div>';
+            }
+        }
+
+        function renderProblems(records, current, pages) {
+            const list = document.getElementById('problemList');
+
+            if (!records || records.length === 0) {
+                list.innerHTML = '<div class="empty">暂无题目</div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            list.innerHTML = records.map(p => {
+                const difficultyLabel = p.difficulty === 1 ? '简单' : p.difficulty === 2 ? '中等' : '困难';
+                const badgeClass = p.difficulty === 1 ? 'badge-easy' : p.difficulty === 2 ? 'badge-medium' : 'badge-hard';
+                return `<div class="problem-item" onclick="location.href='problem.html?id=${p.id}'">
+                    <span class="problem-title">${p.id}. ${p.title}</span>
+                    <div class="problem-meta">
+                        <span class="badge ${badgeClass}">${difficultyLabel}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // 分页
+            const pagination = document.getElementById('pagination');
+            if (pages <= 1) { pagination.innerHTML = ''; return; }
+
+            pagination.innerHTML = `
+                <button onclick="loadProblems(${current - 1})" ${current <= 1 ? 'disabled' : ''}>上一页</button>
+                <span>第 ${current} / ${pages} 页</span>
+                <button onclick="loadProblems(${current + 1})" ${current >= pages ? 'disabled' : ''}>下一页</button>
+            `;
+        }
+
+        loadProblems(1);
+    </script>
+</body>
+</html>

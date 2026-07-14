@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>OJ - 登录</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f5f5f5; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 360px; }
+        h2 { text-align: center; margin-bottom: 24px; color: #333; }
+        input { width: 100%; padding: 10px 12px; margin: 8px 0 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        input:focus { outline: none; border-color: #4A90D9; }
+        label { font-size: 14px; color: #555; }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; margin: 4px 0; }
+        .btn-primary { background: #4A90D9; color: white; }
+        .btn-primary:hover { background: #357ABD; }
+        .btn-secondary { background: #e8e8e8; color: #333; }
+        .btn-secondary:hover { background: #ddd; }
+        .msg { text-align: center; margin-top: 12px; font-size: 14px; color: #e74c3c; }
+        .switch { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+        .switch a { color: #4A90D9; cursor: pointer; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 id="formTitle">登录</h2>
+
+        <label>用户名</label>
+        <input type="text" id="username" placeholder="请输入用户名">
+
+        <label>密码</label>
+        <input type="password" id="password" placeholder="请输入密码">
+
+        <button class="btn btn-primary" id="submitBtn" onclick="handleSubmit()">登录</button>
+        <div class="msg" id="msg"></div>
+
+        <div class="switch">
+            <span id="switchText">还没有账号？</span>
+            <a id="switchLink" onclick="toggleMode()">去注册</a>
+        </div>
+    </div>
+
+    <script>
+        let isLogin = true;
+
+        function toggleMode() {
+            isLogin = !isLogin;
+            document.getElementById('formTitle').textContent = isLogin ? '登录' : '注册';
+            document.getElementById('submitBtn').textContent = isLogin ? '登录' : '注册';
+            document.getElementById('switchText').textContent = isLogin ? '还没有账号？' : '已有账号？';
+            document.getElementById('switchLink').textContent = isLogin ? '去注册' : '去登录';
+            document.getElementById('msg').textContent = '';
+        }
+
+        async function handleSubmit() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const msg = document.getElementById('msg');
+
+            if (!username || !password) {
+                msg.textContent = '请填写用户名和密码';
+                return;
+            }
+
+            const url = isLogin
+                ? `/user/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                : `/user/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+
+            try {
+                const res = await fetch(url, { method: 'POST' });
+                const text = await res.text();
+
+                if (text.includes('成功')) {
+                    localStorage.setItem('username', username);
+                    window.location.href = 'problems.html';
+                } else {
+                    msg.textContent = text;
+                }
+            } catch (e) {
+                msg.textContent = '请求失败：' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
