@@ -7,6 +7,8 @@ import org.example.oj.common.Result;
 import org.example.oj.entity.Submit;
 import org.example.oj.mapper.SubmitMapper;
 import org.example.oj.service.SubmitService;
+import org.example.oj.service.TokenService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,12 +17,20 @@ import org.springframework.web.bind.annotation.*;
 public class SubmitController {
     @Autowired
     private SubmitService submitService;
+    @Autowired
+    private TokenService tokenService;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @PostMapping("/submit")
-    public Result<Long> submit(@RequestBody Submit submit){
+    public Result<Long> submit(@RequestBody Submit submit,@RequestHeader("Authorization")
+            String token){
+        Long userId=tokenService.getUserId(token);
+        submit.setUserId(userId);
         submit.setStatus(0);
         submitService.save(submit);
-        submitService.judge(submit);
+//        submitService.judge(submit);
+        rabbitTemplate.convertAndSend("judge.queue",submit.getId());
         return Result.success("提交成功",submit.getId());
     }
     @GetMapping("/{id}")
