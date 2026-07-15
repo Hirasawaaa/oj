@@ -2,6 +2,8 @@ package org.example.oj.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.example.oj.common.BusinessException;
+import org.example.oj.common.Result;
 import org.example.oj.entity.Submit;
 import org.example.oj.mapper.SubmitMapper;
 import org.example.oj.service.SubmitService;
@@ -15,24 +17,26 @@ public class SubmitController {
     private SubmitService submitService;
 
     @PostMapping("/submit")
-    public String submit(@RequestBody Submit submit){
+    public Result<Long> submit(@RequestBody Submit submit){
         submit.setStatus(0);
         submitService.save(submit);
         submitService.judge(submit);
-        return "提交成功";
+        return Result.success("提交成功",submit.getId());
     }
-    @GetMapping("{id}")
-    public Submit getSubmit(@PathVariable Long id){
-        return submitService.getById(id);
+    @GetMapping("/{id}")
+    public Result<Submit> getSubmit(@PathVariable Long id){
+        Submit submit=submitService.getById(id);
+        if(submit==null)throw new BusinessException(404,"提交不存在");
+        return Result.success(submit);
     }
     @GetMapping("/list")
-    public IPage<Submit> list(
+    public Result<IPage<Submit>> list(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize,
             @RequestParam(required = false) Long problemId) {
         var query = submitService.lambdaQuery();
         if (problemId != null) query.eq(Submit::getProblemId, problemId);
         query.orderByDesc(Submit::getId);
-        return query.page(new Page<>(page, pageSize));
+        return Result.success(query.page(new Page<>(page, pageSize)));
     }
 }

@@ -1,9 +1,12 @@
 package org.example.oj.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.example.oj.common.BusinessException;
+import org.example.oj.common.Result;
 import org.example.oj.entity.Problem;
 import org.example.oj.service.ProblemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.Query;
@@ -16,25 +19,31 @@ public class ProblemController {
     private ProblemService problemService;
 
     @PostMapping("/create")
-    public String createProblem(@RequestBody Problem problem){
+    public Result<Void> createProblem(@RequestBody Problem problem){
         problemService.save(problem);
-        return "创建成功";
+        return Result.success("创建成功",null);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteProblem(@PathVariable Long id) {
-        problemService.removeById(id);
-        return "删除成功";
+    public Result<Void> deleteProblem(@PathVariable Long id) {
+        if(!problemService.removeById(id)){
+            throw new BusinessException(404,"题目不存在");
+        }
+        return Result.success("删除成功",null);
+
     }
 
     @PutMapping("/update")
-    public String updateProblem(@RequestBody Problem problem) {
-        problemService.updateById(problem);
-        return "修改成功";
+    public Result<Void> updateProblem(@RequestBody Problem problem) {
+        if (!problemService.updateById(problem)) {
+            throw new BusinessException(404, "题目不存在");
+        }
+        return Result.success("修改成功", null);
+
     }
 
     @GetMapping("/list")
-    public IPage<Problem> list(
+    public Result<IPage<Problem>> list(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize,
             @RequestParam(required = false) Integer difficulty,
@@ -65,11 +74,15 @@ public class ProblemController {
                 query.orderByAsc(Problem::getId);
             }
         }
-        return query.page(new Page<>(page,pageSize));
+        return Result.success(query.page(new Page<>(page,pageSize)));
     }
     @GetMapping("/{id}")
-    public Problem getProblem(@PathVariable Long id){
-        return problemService.getById(id);
+    public Result<Problem> getProblem(@PathVariable Long id){
+        Problem problem=problemService.getById(id);
+        if(problem==null){
+            throw new BusinessException(404,"题目不存在");
+        }
+        return Result.success(problem);
     }
 
 
